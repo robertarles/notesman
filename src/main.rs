@@ -160,6 +160,9 @@ fn overwrite_file(filename: &String, lines: Vec<String>){
     }
 }
 
+// backup, [create] and update a journal/archive file
+// adds a # header with a timestamp of the update time.
+// each line being archived or journaled is prepended with a timestamp
 fn process_secondary(original_file: &String, backup_file: &String, new_lines: &Vec<String>) {
     
     // create a current timestamp
@@ -177,7 +180,8 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
     );
 
     let mut appended_lines = vec![];
-    appended_lines.push(format!("# last updated {}", &timestamp));
+    // add a header and a blank line to make the markdown valid
+    appended_lines.push(format!("# last updated {}\n", &timestamp));
     for line in new_lines {
         appended_lines.push(line.to_string());
     }
@@ -189,7 +193,8 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
         let original_lines = fs::read_to_string(&original_file).expect(&format!("Unable to read contents of {}", &original_file).to_string());  
 
         for line in original_lines.split("\n") {
-            if ! line.starts_with("#") {
+            // if it's not a header or blank line
+            if ! line.starts_with("#") && line.len() > 2 {
                 appended_lines.push(line.to_string());
             }
         }
