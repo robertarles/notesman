@@ -24,22 +24,22 @@ fn main() {
 
     let passed_todo_filename = cli_args.value_of("current_todo_file").unwrap();
     
-    // parse the passed filename (and path)
+    // parse the passed filename and path
     let current_todo_filename: String = Path::new(&passed_todo_filename).file_name().unwrap().to_os_string().to_str().unwrap().to_string();
     let working_directory: String = Path::new(&passed_todo_filename).parent().unwrap().as_os_str().to_str().unwrap().to_string();
 
-    // special strings / chars
+    // special char sequences to identify lines
     let journal_needle: &str = " . ";
     let journal_line_needle = format!("]{}", journal_needle);
     let archive_line_needle = "- [x] ";
-    let list_line_needle = "- "; // this must be a starts_with on a trimmed line to catch indented list items
+    let list_line_needle = "- "; // this should be a starts_with on a trimmed line to catch indented list items
 
     // todo section tracking
     let mut current_section = "";
-    // let header_tag = "#";
     let in_progress_section_title = "## TODO";
     let done_section_title = "## DONE";
     let archive_section_title = "## ARCHIVE";
+    // let header_tag = "#";
     // let backlog_section_title = "## BACKLOG"; no special treatment for this section, title not used here
 
     // output file text
@@ -130,44 +130,16 @@ fn main() {
     // if exists, read the current journal, append it to the new journal lines
     let journal_original_file = format!("{}/{}", &working_directory, &journal_filename);
     let journal_backup_file = format!("{}/.{}.bak", &working_directory, &journal_filename);
-    if Path::new(&journal_original_file).exists() {
-        // create back up the current journal
-        // OpenOptions::new().create(true).write(true).truncate(true).open(&journal_backup_file).expect("failed to create backup journal file");
-        // println!("DEBUG \n\t{}\n\t{}", &journal_original_file, &journal_backup_file);
-        fs::copy(&journal_original_file, &journal_backup_file).expect("failed making a backup of the journal file");
-        // append the current journal to the new journal lines (latest placed at top of journal)
-        let current_journal_lines = fs::read_to_string(&journal_original_file).expect("Unable to read current version of journal file");   
-        for line in current_journal_lines.split("\n") {
-            journal_lines.push(line.to_string());
-        }
-    }
-
-    // overwrite the current journal with the new+old lines
-    let mut file = OpenOptions::new().create(true).write(true).truncate(true).open(format!("{}/{}", &working_directory, &journal_filename)).unwrap();
-    for line in &journal_lines{
-        writeln!(file, "{}", line).expect("Unable to overwrite the journal data");
-    }
+    process_secondary(&journal_original_file, &journal_backup_file, &journal_lines);
     
     // *****
     // MAINTAIN ARCHIVE FILES
     // *****
 
     // read the current archive, append it to the new archive lines
-    let archive_current_file = format!("{}/{}", &working_directory, &archive_filename);
+    let archive_original_file = format!("{}/{}", &working_directory, &archive_filename);
     let archive_backup_file = format!("{}/.{}.bak", &working_directory, &archive_filename);
-    if Path::new(&archive_current_file).exists() {
-        // back up the current archive
-        //OpenOptions::new().create(true).write(true).truncate(true).open(&archive_backup_file).expect("failed to create backup archive file");
-        fs::copy(&archive_current_file, &archive_backup_file).expect("failed making a backup of the archive file");
-        // append the current archive to the new archive lines (latest placed at top of archives)
-        let current_archive_lines = fs::read_to_string(&archive_current_file).expect("Unable to read current version of archive file");   
-        for line in current_archive_lines.split("\n") {
-            archive_lines.push(line.to_string());
-        }
-    }
-
-    // overwrite the current archive with the new+old lines
-    overwrite_file(&archive_current_file, archive_lines);
+    process_secondary(&archive_original_file, &archive_backup_file, &archive_lines);
 
     // *****
     // UPDATE THE TODO FILE
@@ -185,5 +157,48 @@ fn overwrite_file(filename: &String, lines: Vec<String>){
     let mut file = OpenOptions::new().create(true).write(true).truncate(true).open(&filename).unwrap();
     for line in lines {
         writeln!(file, "{}", line).expect(&format!("Unable to overwrite {}", filename));
+    }
+}
+
+fn process_secondary(original_file: &String, backup_file: &String, new_lines: &Vec<String>) {
+    
+    // create a current timestamp
+    let now = Utc::now();
+    let (is_pm, hour) = now.hour12();
+    let (_, year) = now.year_ce();
+    let timestamp = format!(
+        "[{}{:02}{:02}T{:02}:{:02}{}UTC]",
+        year,
+        now.month(),
+        now.day(),
+        hour,
+        now.minute(),
+        if is_pm { "PM" } else { "AM" }
+    );
+
+    let mut appended_lines = vec![];
+    appended_lines.push(format!("# last updated {}", &timestamp));
+    for line in new_lines {
+        appended_lines.push(line.to_string());
+    }
+
+    if Path::new(&original_file).exists() {
+        // create back up the current file
+        fs::copy(&original_file, &backup_file).expect(&format!("failed making a backup of {}", &original_file).to_string());
+        // append the current file to the new file lines (latest placed at top of file)
+        let original_lines = fs::read_to_string(&original_file).expect(&format!("Unable to read contents of {}", &original_file).to_string());  
+
+        for line in original_lines.split("\n") {
+            if ! line.starts_with("#") {
+                appended_lines.push(line.to_string());
+            }
+        }
+
+    }
+
+    // overwrite the current file with the new+old lines
+    let mut file = OpenOptions::new().create(true).write(true).truncate(true).open(&original_file).unwrap();
+    for line in appended_lines{
+        writeln!(file, "{}", line).expect(&format!("Unable to overwrite {}", &original_file).to_string());
     }
 }
