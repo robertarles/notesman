@@ -16,7 +16,7 @@ fn main() {
     let cli_args = App::new("args")
         .arg(
             Arg::with_name("current_todo_file")
-                .help("The todo file to be processed.")
+                .help("The source todo file to be processed.")
                 .required(true)
                 .index(1),
         )
@@ -118,38 +118,38 @@ fn main() {
             }
             
         } else {
-            // all "not special" lines stay in the todo file
+            // all "do-not-move-to-archive" lines stay in the todo file
             todo_lines.push(line.to_string());
         }
     }
+    //println!("{:#?}", journal_lines);
+     // *****
+     // MAINTAIN JOURNAL FILES
+     // *****
 
-    // *****
-    // MAINTAIN JOURNAL FILES
-    // *****
-
-    // if exists, read the current journal, append it to the new journal lines
-    let journal_original_file = format!("{}/{}", &working_directory, &journal_filename);
-    let journal_backup_file = format!("{}/.{}.bak", &working_directory, &journal_filename);
-    process_secondary(&journal_original_file, &journal_backup_file, &journal_lines);
+     // if exists, read the current journal, append it to the new journal lines
+     let journal_original_file = format!("{}/{}", &working_directory, &journal_filename);
+     let journal_backup_file = format!("{}/.{}.bak", &working_directory, &journal_filename);
+     process_secondary(&journal_original_file, &journal_backup_file, &journal_lines, &"journal"[..]);
     
-    // *****
-    // MAINTAIN ARCHIVE FILES
-    // *****
+     // *****
+     // MAINTAIN ARCHIVE FILES
+     // *****
 
-    // read the current archive, append it to the new archive lines
-    let archive_original_file = format!("{}/{}", &working_directory, &archive_filename);
-    let archive_backup_file = format!("{}/.{}.bak", &working_directory, &archive_filename);
-    process_secondary(&archive_original_file, &archive_backup_file, &archive_lines);
+     // read the current archive, append it to the new archive lines
+     let archive_original_file = format!("{}/{}", &working_directory, &archive_filename);
+     let archive_backup_file = format!("{}/.{}.bak", &working_directory, &archive_filename);
+     process_secondary(&archive_original_file, &archive_backup_file, &archive_lines, &"archive"[..]);
 
-    // *****
-    // UPDATE THE TODO FILE
-    // *****
+     // *****
+     // UPDATE THE TODO FILE
+     // *****
 
-    // backup the current todos
-    fs::copy(&current_todo_infile, &todo_backup_filename).expect("failed to write the updates to the todo file");
+     // backup the current todos
+     fs::copy(&current_todo_infile, &todo_backup_filename).expect("failed to write the updates to the todo file");
     
-    // re-write the todo
-    overwrite_file(&current_todo_infile, todo_lines);
+     // re-write the todo
+     overwrite_file(&current_todo_infile, todo_lines);
 
 }
 
@@ -163,7 +163,7 @@ fn overwrite_file(filename: &String, lines: Vec<String>){
 // backup, [create] and update a journal/archive file
 // adds a # header with a timestamp of the update time.
 // each line being archived or journaled is prepended with a timestamp
-fn process_secondary(original_file: &String, backup_file: &String, new_lines: &Vec<String>) {
+fn process_secondary(original_file: &String, backup_file: &String, new_lines: &Vec<String>, name: &str) {
     
     // create a current timestamp
     let now = Utc::now();
@@ -181,7 +181,9 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
 
     let mut appended_lines = vec![];
     // add a header and a blank line to make the markdown valid
-    appended_lines.push(format!("# last updated {}\n", &timestamp));
+    let hugo_header: String = String::from(format!("+++\nTitle = \"TODO {}\"\nDate = \"{}\"\nTags = [\"{}\"]\n+++", &name, &timestamp, &name));
+    appended_lines.push(hugo_header);
+    //appended_lines.push(format!("# last updated {}\n", &timestamp));
     for line in new_lines {
         appended_lines.push(line.to_string());
     }
@@ -203,7 +205,7 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
 
     // overwrite the current file with the new+old lines
     let mut file = OpenOptions::new().create(true).write(true).truncate(true).open(&original_file).unwrap();
-    for line in appended_lines{
+    for line in appended_lines {
         writeln!(file, "{}", line).expect(&format!("Unable to overwrite {}", &original_file).to_string());
     }
 }
