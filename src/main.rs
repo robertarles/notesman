@@ -181,7 +181,7 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
 
     let mut appended_lines = vec![];
     // add a header and a blank line to make the markdown valid
-    let hugo_header: String = String::from(format!("+++\nTitle = \"TODO {}\"\nDate = \"{}\"\nTags = [\"{}\"]\n+++", &name, &timestamp, &name));
+    let hugo_header: String = String::from(format!("+++\nTitle = \"TODO {}\"\nDate = \"{}\"\nTags = [\"TODO-{}\"]\n+++", &name, &timestamp, &name));
     appended_lines.push(hugo_header);
     //appended_lines.push(format!("# last updated {}\n", &timestamp));
     for line in new_lines {
