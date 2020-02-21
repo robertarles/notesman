@@ -185,7 +185,12 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
     appended_lines.push(hugo_header);
     //appended_lines.push(format!("# last updated {}\n", &timestamp));
     for line in new_lines {
-        appended_lines.push(line.to_string());
+        // all lines below the header should start with a dash+space '- ' in order for the md to put each line on it's own
+        if line.starts_with("- ") {
+            appended_lines.push(line.to_string());
+        }else{
+            appended_lines.push(format!("- {}", line.to_string()));
+        }
     }
 
     if Path::new(&original_file).exists() {
