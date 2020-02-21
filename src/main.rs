@@ -170,7 +170,7 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
     let (is_pm, hour) = now.hour12();
     let (_, year) = now.year_ce();
     let timestamp = format!(
-        "[{}{:02}{:02}T{:02}:{:02}{}UTC]",
+        "{}-{:02}-{:02}, {:02}:{:02}{}UTC",
         year,
         now.month(),
         now.day(),
@@ -202,7 +202,12 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
         for line in original_lines.split("\n") {
             // if it's not a header or blank line
             if ! line.starts_with("#") && line.len() > 2 {
-                appended_lines.push(line.to_string());
+                // if it's already a list item just add it (md to html output is nicer this way)
+                if line.starts_with("- ") {
+                    appended_lines.push(line.to_string());
+                }else{
+                    appended_lines.push(format!("- {}", line.to_string()));
+                }
             }
         }
 
