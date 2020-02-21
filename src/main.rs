@@ -65,7 +65,7 @@ fn main() {
         if is_pm { "PM" } else { "AM" }
     );
     let journal_stamp = format!(" {} ",&timestamp);
-    let archive_stamp = format!("{} ",&timestamp);
+    let archive_stamp = format!("- {} ",&timestamp);
 
     let current_todo_infile = format!("{}/{}", &working_directory, &current_todo_filename);
     let todo_backup_filename = format!("{}/.{}.bak", &working_directory, &current_todo_filename);
