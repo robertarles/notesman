@@ -73,7 +73,8 @@ fn main() {
     println!("Reading [{}]", &current_todo_infile);
     let current_todo_lines_str = fs::read_to_string(&current_todo_infile).expect("Unable to read current todo file");
     let current_todo_lines = current_todo_lines_str.split("\n") ;
-    
+
+
     for line in current_todo_lines {
 
         // when finding a header/section, clear the section. All code must assume we're not in a special section at this point.
@@ -92,7 +93,7 @@ fn main() {
             current_section = done_section_title
         }
 
-        // if in progress, journal items with journal mark and archive items that are complete
+        // journal items with journal mark (those marked touched), plus archive ALL items that are marked complete
         if current_section == in_progress_section_title {
             
             // journal lines with the journal mark
@@ -161,7 +162,7 @@ fn overwrite_file(filename: &String, lines: Vec<String>){
 }
 
 // backup, [create] and update a journal/archive file
-// adds a # header with a timestamp of the update time.
+// adds a hugo compat 'frontmatter' +++ header with a timestamp of the update time.
 // each line being archived or journaled is prepended with a timestamp
 fn process_secondary(original_file: &String, backup_file: &String, new_lines: &Vec<String>, name: &str) {
     
@@ -169,28 +170,33 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
     let now = Utc::now();
     let (is_pm, hour) = now.hour12();
     let (_, year) = now.year_ce();
-    let timestamp = format!(
-        "{}-{:02}-{:02}, {:02}:{:02}{}UTC",
+    let datestamp = format!(
+        "{}-{:02}-{:02}", //, {:02}:{:02}{}UTC", // hugo header date format does not handle time
         year,
         now.month(),
-        now.day(),
+        now.day()
+    );
+    let timestamp = format!("{}:{}{}", 
         hour,
         now.minute(),
         if is_pm { "PM" } else { "AM" }
     );
 
+    // set a line to this value before the push, and it will not be pushed.
+    let delete_line_mark = "+++DELETE_LINE+++";
+
     let mut appended_lines = vec![];
     // add a header and a blank line to make the markdown valid
-    let hugo_header: String = String::from(format!("+++\nTitle = \"TODO {}\"\nDate = \"{}\"\nTags = [\"TODO-{}\"]\n+++", &name, &timestamp, &name));
+    let hugo_header: String = String::from(format!("+++\nTitle = \"TODO {}, {} {}\"\nDate = \"{}\"\nTags = [\"TODO-{}\"]\n+++", &name, &datestamp, &timestamp, &datestamp, &name));
     appended_lines.push(hugo_header);
-    //appended_lines.push(format!("# last updated {}\n", &timestamp));
+
+    //appended_lines.push(format!("# last updated {}\n", &datestamp));
     for line in new_lines {
-        // all lines below the header should start with a dash+space '- ' in order for the md to put each line on it's own
-        if line.starts_with("- ") {
-            appended_lines.push(line.to_string());
-        }else{
-            appended_lines.push(format!("- {}", line.to_string()));
-        }
+            if line.starts_with("- ") {
+                appended_lines.push(line.to_string());
+            }else{
+                appended_lines.push(format!("- {}", line.to_string()));
+            }
     }
 
     if Path::new(&original_file).exists() {
@@ -199,9 +205,33 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
         // append the current file to the new file lines (latest placed at top of file)
         let original_lines = fs::read_to_string(&original_file).expect(&format!("Unable to read contents of {}", &original_file).to_string());  
 
-        for line in original_lines.split("\n") {
-            // if it's not a header or blank line
-            if ! line.starts_with("#") && line.len() > 2 {
+        let mut in_header_section = false;
+        let header_start_strings = vec!["+++", "Title =", "Date =", "Tags ="];
+
+        for mut line in original_lines.split("\n") {
+
+            // when in the header, mark line for deletion, skip to next line
+            if line.starts_with("+++"){
+                // toggle true/false
+                in_header_section = if in_header_section == false { true } else { false };
+                // if this is a simple header marker, set it to be deleted (guessing that it may have a space or two following it)
+                if line.len() < 5 {
+                    line = delete_line_mark;
+                }
+            }
+
+            // don't assume our header markup is reliable, also check that the line looks like a header
+            if in_header_section {
+                for header_start_string in &header_start_strings{
+                    if line.starts_with(header_start_string){
+                        // delete this line, we don't keep old headers
+                        line = delete_line_mark;
+                    }
+                }
+            }
+
+            // if it's "deleted" or a (nearly)blank line
+            if line != delete_line_mark && line.len() > 2 {
                 // if it's already a list item just add it (md to html output is nicer this way)
                 if line.starts_with("- ") {
                     appended_lines.push(line.to_string());
