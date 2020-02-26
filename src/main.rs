@@ -7,7 +7,7 @@ extern crate clap;
 use clap::{Arg, App};
 
 extern crate chrono;
-use chrono::{Datelike, Timelike, Utc};
+use chrono::{Datelike, Timelike, Local};
 
 //fn main()-> Result<(), Box<dyn std::error::Error>> {
 fn main() {
@@ -52,17 +52,17 @@ fn main() {
     let archive_filename = current_todo_filename.replace(".md", "-ARCHIVE.md");
 
     // create a timestamp for the archived and jouranled items
-    let now = Utc::now();
+    let now = Local::now();
     let (is_pm, hour) = now.hour12();
     let (_, year) = now.year_ce();
     let timestamp = format!(
-        "[{}{:02}{:02}T{:02}:{:02}{}UTC]",
+        "[{}-{:02}-{:02}, {:02}:{:02}{}]",
         year,
         now.month(),
         now.day(),
         hour,
         now.minute(),
-        if is_pm { "PM" } else { "AM" }
+        if is_pm { "pm" } else { "am" }
     );
     let journal_stamp = format!(" {} ",&timestamp);
     let archive_stamp = format!("- {} ",&timestamp);
@@ -167,7 +167,7 @@ fn overwrite_file(filename: &String, lines: Vec<String>){
 fn process_secondary(original_file: &String, backup_file: &String, new_lines: &Vec<String>, name: &str) {
     
     // create a current timestamp
-    let now = Utc::now();
+    let now = Local::now();
     let (is_pm, hour) = now.hour12();
     let (_, year) = now.year_ce();
     let datestamp = format!(
@@ -176,7 +176,7 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
         now.month(),
         now.day()
     );
-    let timestamp = format!("{}:{}{}", 
+    let timestamp = format!("{:02}:{:02}{}", 
         hour,
         now.minute(),
         if is_pm { "PM" } else { "AM" }
