@@ -13,7 +13,8 @@ use chrono::{Datelike, Timelike, Local};
 fn main() {
 
     // handle the CLI args
-    let cli_args = App::new("args")
+    let cli_args = App::new("notesman")
+        .version("0.5.1")
         .arg(
             Arg::with_name("current_todo_file")
                 .help("The source todo file to be processed.")
@@ -206,7 +207,7 @@ fn process_secondary(original_file: &String, backup_file: &String, new_lines: &V
         let original_lines = fs::read_to_string(&original_file).expect(&format!("Unable to read contents of {}", &original_file).to_string());  
 
         let mut in_header_section = false;
-        let header_start_strings = vec!["+++", "Title =", "Date =", "Tags ="];
+        let header_start_strings = vec!["+++", "Title =", "Date =", "Tags =", "Category ="];
 
         for mut line in original_lines.split("\n") {
 
