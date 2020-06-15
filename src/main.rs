@@ -14,7 +14,7 @@ fn main() {
 
     // handle the CLI args
     let cli_args = App::new("notesman")
-        .version("0.5.1")
+        .version("0.5.2")
         .arg(
             Arg::with_name("current_todo_file")
                 .help("The source todo file to be processed.")
@@ -40,7 +40,8 @@ fn main() {
     let in_progress_section_title = "## TODO";
     let done_section_title = "## DONE";
     let archive_section_title = "## ARCHIVE";
-    // let header_tag = "#";
+    let front_matter_section_boundry = "+++";
+    let front_matter_date_key = "Date=";
     // let backlog_section_title = "## BACKLOG"; no special treatment for this section, title not used here
 
     // output file text
@@ -64,6 +65,12 @@ fn main() {
         hour,
         now.minute(),
         if is_pm { "pm" } else { "am" }
+    );
+    let datestring = format!(
+        "{}-{:02}-{:02}",
+        year,
+        now.month(),
+        now.day(),
     );
     let journal_stamp = format!(" {} ",&timestamp);
     let archive_stamp = format!("- {} ",&timestamp);
@@ -93,9 +100,25 @@ fn main() {
         if line.starts_with(done_section_title) {
             current_section = done_section_title
         }
+        // front matter starts and ends with the same 'front_matter_section_boundry', so 'toggle off' the section if we see it again
+        if line.starts_with(front_matter_section_boundry) && (current_section != front_matter_section_boundry) {
+            current_section = front_matter_section_boundry
+        }
+
+        /*
+        * begin processing lines
+        */
+        if current_section == front_matter_section_boundry {
+
+            // update the date line in the frontmatter (header) section
+            if line.starts_with(&front_matter_date_key) {
+                todo_lines.push(format!("{} \"{}\"", front_matter_date_key, datestring));
+            } else {
+                todo_lines.push(line.to_string());
+            }
 
         // journal items with journal mark (those marked touched), plus archive ALL items that are marked complete
-        if current_section == in_progress_section_title {
+        } else if current_section == in_progress_section_title {
             
             // journal lines with the journal mark
             if line.contains(&journal_line_needle) {
@@ -125,33 +148,33 @@ fn main() {
         }
     }
     //println!("{:#?}", journal_lines);
-     // *****
-     // MAINTAIN JOURNAL FILES
-     // *****
+    // *****
+    // MAINTAIN JOURNAL FILES
+    // *****
 
-     // if exists, read the current journal, append it to the new journal lines
-     let journal_original_file = format!("{}/{}", &working_directory, &journal_filename);
-     let journal_backup_file = format!("{}/.{}.bak", &working_directory, &journal_filename);
-     process_secondary(&journal_original_file, &journal_backup_file, &journal_lines, &"journal"[..]);
-    
-     // *****
-     // MAINTAIN ARCHIVE FILES
-     // *****
+    // if exists, read the current journal, append it to the new journal lines
+    let journal_original_file = format!("{}/{}", &working_directory, &journal_filename);
+    let journal_backup_file = format!("{}/.{}.bak", &working_directory, &journal_filename);
+    process_secondary(&journal_original_file, &journal_backup_file, &journal_lines, &"journal"[..]);
 
-     // read the current archive, append it to the new archive lines
-     let archive_original_file = format!("{}/{}", &working_directory, &archive_filename);
-     let archive_backup_file = format!("{}/.{}.bak", &working_directory, &archive_filename);
-     process_secondary(&archive_original_file, &archive_backup_file, &archive_lines, &"archive"[..]);
+    // *****
+    // MAINTAIN ARCHIVE FILES
+    // *****
 
-     // *****
-     // UPDATE THE TODO FILE
-     // *****
+    // read the current archive, append it to the new archive lines
+    let archive_original_file = format!("{}/{}", &working_directory, &archive_filename);
+    let archive_backup_file = format!("{}/.{}.bak", &working_directory, &archive_filename);
+    process_secondary(&archive_original_file, &archive_backup_file, &archive_lines, &"archive"[..]);
 
-     // backup the current todos
-     fs::copy(&current_todo_infile, &todo_backup_filename).expect("failed to write the updates to the todo file");
-    
-     // re-write the todo
-     overwrite_file(&current_todo_infile, todo_lines);
+    // *****
+    // UPDATE THE TODO FILE
+    // *****
+
+    // backup the current todos
+    fs::copy(&current_todo_infile, &todo_backup_filename).expect("failed to write the updates to the todo file");
+
+    // re-write the todo
+    overwrite_file(&current_todo_infile, todo_lines);
 
 }
 
