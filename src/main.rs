@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 
 mod cli;
-mod file;
+mod librarian;
 
 extern crate chrono;
 use chrono::{Datelike, Timelike, Local};
@@ -10,7 +10,7 @@ use chrono::{Datelike, Timelike, Local};
 fn main() {
 
     // setup arg handling, get the todo filename
-    let cli_args = cli::cli_arg_handler();
+    let cli_args = cli::arg_handler();
 
     let passed_todo_filename = cli_args.value_of("todo_file").unwrap();
     // make sure a markdown file was specified (TODO: add handling of arbitrary extensions?)
@@ -148,7 +148,7 @@ fn main() {
     // if exists, read the current journal, append it to the new journal lines
     let journal_original_file = format!("{}/{}", &working_directory, &journal_filename);
     let journal_backup_file = format!("{}/.{}.bak", &working_directory, &journal_filename);
-    file::process_secondary(&journal_original_file, &journal_backup_file, &journal_lines, &"journal"[..]);
+    librarian::archive(&journal_original_file, &journal_backup_file, &journal_lines, &"journal"[..]);
 
     // *****
     // MAINTAIN ARCHIVE FILES
@@ -157,7 +157,7 @@ fn main() {
     // read the current archive, append it to the new archive lines
     let archive_original_file = format!("{}/{}", &working_directory, &archive_filename);
     let archive_backup_file = format!("{}/.{}.bak", &working_directory, &archive_filename);
-    file::process_secondary(&archive_original_file, &archive_backup_file, &archive_lines, &"archive"[..]);
+    librarian::archive(&archive_original_file, &archive_backup_file, &archive_lines, &"archive"[..]);
 
     // *****
     // UPDATE THE TODO FILE
@@ -167,6 +167,6 @@ fn main() {
     fs::copy(&todo_infile, &todo_backup_filename).expect("failed to write the updates to the todo file");
 
     // update the todo
-    file::overwrite_file(&todo_infile, todo_lines);
+    librarian::publish(&todo_infile, todo_lines);
 
 }

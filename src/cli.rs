@@ -1,7 +1,7 @@
 extern crate clap;
 use clap::{Arg, App};
 
-pub fn cli_arg_handler <'main> () -> clap::ArgMatches<'main> {
+pub fn arg_handler <'main> () -> clap::ArgMatches<'main> {
     return App::new("notesman")
         .version("0.5.3")
         .arg(

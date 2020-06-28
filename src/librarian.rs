@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use chrono::{Datelike, Timelike, Local};
 
-pub fn overwrite_file(filename: &String, lines: Vec<String>){
+pub fn publish(filename: &String, lines: Vec<String>){
     let mut file = fs::OpenOptions::new().create(true).write(true).truncate(true).open(&filename).unwrap();
     for line in lines {
         writeln!(file, "{}", line).expect(&format!("Unable to overwrite {}", filename));
@@ -13,7 +13,7 @@ pub fn overwrite_file(filename: &String, lines: Vec<String>){
 // backup, [create] and update a journal/archive file
 // adds a hugo compat 'frontmatter' +++ header with a timestamp of the update time.
 // each line being archived or journaled is prepended with a timestamp
-pub fn process_secondary(original_file: &String, backup_file: &String, new_lines: &Vec<String>, name: &str) {
+pub fn archive(original_file: &String, backup_file: &String, new_lines: &Vec<String>, name: &str) {
     
     // create a current timestamp
     let now = Local::now();
