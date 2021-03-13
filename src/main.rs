@@ -3,6 +3,8 @@ use std::path::Path;
 
 mod cli;
 mod librarian;
+mod notes_utils;
+use notes_utils::{NotesMetadata};
 
 extern crate chrono;
 use chrono::{Datelike, Timelike, Local};
@@ -24,29 +26,27 @@ fn main() {
     let original_todo_filename: String = Path::new(&passed_todo_filename).file_name().unwrap().to_os_string().to_str().unwrap().to_string();
     // get the path to the specified todo file
     let working_directory: String = Path::new(&passed_todo_filename).parent().unwrap().as_os_str().to_str().unwrap().to_string();
-
-    // special char sequences to identify lines
-    let journal_needle: &str = " . ";  // the "I workied on this, please journal it" indicator
-    let journal_line_needle = format!("]{}", journal_needle); // a journal-ready line will have a checkbox and then the journal indicator
-    let archive_line_needle = "- [x] "; // a checked checkbox
-    let list_line_needle = "- "; // markdown syntax, this specifies a list item
-
-    // todo section tracking
-    let mut current_section = ""; // start with no section found
-    let todo_section_title = "## TODO";
-    let done_section_title = "## DONE"; // every line placed in a DONE or ARCHIVE section should be archived
-    let archive_section_title = "## ARCHIVE";
-    let front_matter_section_boundry = "+++"; // this is the header section (front matter) boundry marker for HUGO static site builder
-    let front_matter_date_key = "Date="; // we'll update date in the header each time we process a todo file
-
+    
     // vars to gather output file text
     let mut journal_lines: Vec<String> = vec![];
     let mut todo_lines: Vec<String> = vec![];
     let mut archive_lines: Vec<String> = vec![];
-
-    // default output file names for journaling and archiving data
+    
+    // default output file names - append -JOURNAL|-ARCHIVE to the base names (maintaining extension)
     let journal_filename = original_todo_filename.replace(file_extension, &format!("-JOURNAL{}", &file_extension));
     let archive_filename = original_todo_filename.replace(file_extension, &format!("-ARCHIVE{}", &file_extension));
+    
+    let notes_meta = NotesMetadata {
+        journal_needle: String::from(" . "),
+        journal_line_needle: String::from("] . "), // a journal-ready line will have a checkbox and then the journal indicator
+        archive_line_needle: String::from("- [x] "), // a checked checkbox
+        list_line_needle: String::from("- "), // markdown syntax, this specifies a list item
+        todo_section_title: String::from("## TODO"),
+        done_section_title: String::from("## DONE"), // every line placed in a DONE or ARCHIVE section should be archived
+        archive_section_title: String::from("## ARCHIVE"),
+        front_matter_section_boundry: String::from("+++"), // this is the header section (front matter) boundry marker for HUGO static site builder
+        front_matter_date_key: String::from("Date="), // we'll update date in the header each time we process a todo file
+    };
 
     // create a timestamp for the archived and journaled items/lines
     let now = Local::now();
@@ -70,67 +70,70 @@ fn main() {
     let archive_line_stamp = format!(" {} ",&timestamp);
     let archive_line_prefix = format!("- {} ",&timestamp); // make each line a list item (markdown otherwise globs all lines into a paragraph)
 
-    let todo_infile = format!("{}/{}", &working_directory, &original_todo_filename);
+    // the todo file to process
+    let todo_source_filename = format!("{}/{}", &working_directory, &original_todo_filename);
+    // the backup file to write (working with a safety net!)
     let todo_backup_filename = format!("{}/.{}.bak", &working_directory, &original_todo_filename);
 
-    println!("Reading [{}]", &todo_infile);
-    let todo_lines_str = fs::read_to_string(&todo_infile).expect("Unable to read specified todo file");
+    println!("Reading [{}]", &todo_source_filename);
+    let todo_lines_str = fs::read_to_string(&todo_source_filename).expect("Unable to read specified todo file");
 
+    let mut current_section = String::from(""); // start with no section found
     for line in todo_lines_str.split("\n") {
 
         // when finding a header/section, clear the section. All code must assume we're not in a special section at this point.
         if line.starts_with("#") {
-            current_section = "";
+            current_section = "".to_string();
         }
         // we're in the in-progress section
-        if line.starts_with(todo_section_title){
-            current_section = todo_section_title;
+        if line.starts_with(&notes_meta.todo_section_title){
+            current_section = notes_meta.todo_section_title.to_string();
         }
         // sections archive && done have the same use case
-        if line.starts_with(archive_section_title) {
-            current_section = archive_section_title;
+        if line.starts_with(&notes_meta.archive_section_title) {
+            current_section = notes_meta.archive_section_title.to_string();
         }
-        if line.starts_with(done_section_title) {
-            current_section = done_section_title
+        if line.starts_with(&notes_meta.done_section_title) {
+            current_section = notes_meta.done_section_title.to_string();
         }
         // front matter starts and ends with the same 'front_matter_section_boundry', so 'toggle off' the section if we see it again
-        if line.starts_with(front_matter_section_boundry) && (current_section != front_matter_section_boundry) {
-            current_section = front_matter_section_boundry
+        if line.starts_with(&notes_meta.front_matter_section_boundry) && (current_section != notes_meta.front_matter_section_boundry) {
+            current_section = notes_meta.front_matter_section_boundry.to_string();
         }
 
         /*
         * begin processing lines
         */
-        if current_section == front_matter_section_boundry {
+        if current_section == notes_meta.front_matter_section_boundry {
 
             // update the date line in the frontmatter (header) section
-            if line.starts_with(&front_matter_date_key) {
-                todo_lines.push(format!("{} \"{}\"", front_matter_date_key, datestring));
+            if line.starts_with(&notes_meta.front_matter_date_key) {
+                todo_lines.push(format!("{} \"{}\"", &notes_meta.front_matter_date_key, datestring));
             } else {
                 todo_lines.push(line.to_string());
             }
 
         // journal items with journal mark (those marked touched), plus archive ALL items that are marked complete
-        } else if current_section == todo_section_title {
+        } else if current_section == notes_meta.todo_section_title {
             
             // journal lines with the journal mark
-            if line.contains(&journal_line_needle) {
-                journal_lines.push(line.replace(journal_needle, &archive_line_stamp));
+            if line.contains(&notes_meta.journal_line_needle) {
+                journal_lines.push(line.replace(&notes_meta.journal_needle, &archive_line_stamp));
             }
 
             // if closed, move to archive, else keep in todo
-            if line.contains(&archive_line_needle) {
-                archive_lines.push(line.replace(&archive_line_needle, &archive_line_prefix).to_string());
+            if line.contains(&notes_meta.archive_line_needle) {
+                archive_lines.push(line.replace(&notes_meta.archive_line_needle, &archive_line_prefix).to_string());
             }else{
-                todo_lines.push(line.replace(journal_needle, " ")); // needle is surrounded by spaces, leave one space there
+                todo_lines.push(line.replace(&notes_meta.journal_needle, " ")); // needle is surrounded by spaces, leave one space there
             }
         
         // archive all list items in an archive-type section
-        } else if current_section == archive_section_title || current_section == done_section_title {
-            if line.contains(&archive_line_needle) {
-                archive_lines.push(line.replace(&archive_line_needle, &archive_line_prefix).to_string());
-            } else if line.contains(list_line_needle) {
-                archive_lines.push(line.replace(&list_line_needle, &archive_line_prefix).to_string());
+        } else if current_section == notes_meta.archive_section_title || current_section == notes_meta.done_section_title {
+            if line.contains(&notes_meta.archive_line_needle) {
+                archive_lines.push(line.replace(&notes_meta.archive_line_needle, &archive_line_prefix).to_string());
+            } else if line.contains(&notes_meta.list_line_needle) {
+                archive_lines.push(line.replace(&notes_meta.list_line_needle, &archive_line_prefix).to_string());
             } else {
                 todo_lines.push(line.to_string());
             }
@@ -160,13 +163,13 @@ fn main() {
     librarian::archive(&archive_original_file, &archive_backup_file, &archive_lines, &"archive"[..]);
 
     // *****
-    // UPDATE THE TODO FILE
+    // UPDATE THE todo FILE
     // *****
 
     // backup the current todos
-    fs::copy(&todo_infile, &todo_backup_filename).expect("failed to write the updates to the todo file");
+    fs::copy(&todo_source_filename, &todo_backup_filename).expect("failed to write the updates to the todo file");
 
     // update the todo
-    librarian::publish(&todo_infile, todo_lines);
+    librarian::publish(&todo_source_filename, todo_lines);
 
 }
