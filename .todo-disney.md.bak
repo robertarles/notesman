@@ -1,0 +1,84 @@
+---
+title: ToDo-Disney
+tags: #STARTED #BLOCKED #WAITING | #DONE #CANCELLED
+priorities: #A #B #C #F
+---
+
+## TODO
+
+- [x] spend 15 min on @jenniferOrhuela appium desktopn sauce connection issue (see slack)
+- [ ] #A #STARTED [build a containerized work environment](./personal/containerized_workEnvironment.md)
+- [ ] #A #STARTED [Saucelabs appium 2.0.0 and iOS 16 iphone14](./disney/saucelabs-ios16CapabilitiesFailure.md)
+- [ ] #A #STARTED [MEP replenish failing](./disney/api-tdod-MEPRequestsFailing.md)
+- [ ] #A #STARTED [SE Priority related security findings](./disney/SESecurityFindings-manageSecurityFollowUps.md) __COP DB DOWN 4 SCAN__
+- [ ] #A #STARTED [WDW v2 migration to new framework](./disney/v3Framework-migrateWDWMobileTestAutomationToV3.md)
+- [ ] #B #STARTED #v3Framework create OneID client, add wrapper for backwards compat with framework V2 #apiClientMonorepo
+- [ ] #B #STARTED [LERNA initial-publish notes](./disney/v3Framework_releaseprocess.md)
+- [ ] #A #STARTED [#apiClientMonorepo #v3Framework](./disney/v3framework-api-client-monorepo.md)
+- [ ] #A #STARTED [booking service retirement](bookingserviceretirement.org)
+- [ ] #B #STARTED facility & onesource are retiring. update framework as req'd. messaged #os-to-dscribe-migration_triumph
+- [ ] #C @keithRichards wants [android 9 added to the appium local run options [v2 framework](./disney/v2Framework_CLI_addDroid9.md)
+- [ ] #B {#personal} [Sauced, saucelabs cli in c++](./personal/saucelabs-sauced_cliInCpp.md)
+- [ ] #B {#personal} [Todo-lists utility](./personal/todoList-assistant_utility.md)
+
+## BACKLOG
+
+- [ ] #A [design vault client](./disney/api-vault-designClientForFrameworkUse.md)
+- [ ] #B [get action on launchpad scope requests](./disney/launchpad-scopeRequests.md)
+- [ ] #C gqe cli bug. not adding data in apps.in.test.js for (both) testObjectAppId:  (android only) appActivityLaunch appPackage
+- STARTED #B testaid API use #testaid #techDebt :#HOLD:
+  - [ ] @ramBeesabathuni gift card API, using testaid api. This should be calling the same API as testaid, not using testaid?
+  - [ ] @evanSalzman booking external rooms API, using testaid API, manual process doc <<https://mywiki.disney.com/pages/viewpage.action?pageId=453990688>*
+- #A #apiClient Purchase AP via Disney API [notes](./workingNotes/api-ap.md), deprecate this last dependence on TDOD
+- [ ]  research: method to get "old" AP's, or keep/create new TDOD client to support expiring AP's?
+- #A #brainstorm [notes](./workingNotes/brainstorm.md) must begin attacking at a higher level, broad impact/industry-wide impact solutions
+- #A split the wallet and paymentsheet services
+- #B @salvadorVegaVega verdaccio v3 framework entries are showing no readme.md and bad github link :#HOLD:
+- STARTED #B request new scope for DTSS test automation bypass ( submitted last month, followed up in #authz_support today <2022-05-24 Tue> ) :#ACTIVE:
+  - [ ] need to follow process from [bypass recaptcha page](https://confluence.disney.com/pages/viewpage.action?spaceKey=CTD&title=Bypassing+Google+reCAPTCHA+for+Automated+Testing)
+SCHEDULED: <2022-08-01 Mon>
+- [ ] STARTED #B MMPlus test/saucelabs concurrency need to be controlled This still peaked above 100 around may 24 :#ACTIVE:
+  - [ ] test runs with sauce-env maxInstances=1 vs current 10. #WATCHING :#WAITING:
+    many un-named jobs, lot's of 0 test run times within un-named jobs, though many are running
+
+- Team vm concurrency chart (does not agree with downloaded chart data, at all)
+  - as of may 5: may 2, 278, may 3 41
+  - [ ] [ ] determine why there is still a correlating ratio of sessions rather than a hard limit
+- [ ] #A research  restarting mobile app [appium terminate app doc](https://appium.io/docs/en/commands/device/app/terminate-app/) and [appium activate app doc](http://appium.io/docs/en/commands/device/app/activate-app/)
+- [ ] #B gqe cli needs ability to upload to rdc storage space? and modify capabilities settings :#saucelabs:#gqeCli:#gqeFramework:
+- [ ] #B #onboarding process appears to be broken after jenkins upgrades [example error](http://10.110.209.30:8181/job/manage-platform-jenkins-jobs/job/manage-jenkins-digital-mobile-nodejs-v2-tests/5/console) -> 2021-10-12T15:46:31 this appears to be related to terrafolio gradle plugin not having gradle 7+ support (needs annotations for props)
+- [ ] #B #paraDaemon test use of an overseer/responder that periodically runs "plugin" code
+- [ ] #saucelabs #saucestorage update v3 framework to handle new `storage:` prefix (env.json?, cli arg/flag?)
+- [ ] #documentation #buildmacs document the digital mobile build pipeline
+- [ ] #documentation #buildmacs jenkins server itself
+- [ ] #documentation #buildmacs ?? what else is there PM2, Docker, backup restore recover process?
+- [ ] #genie #framework-services Genie+, research the api calls used on testaid (tap 5 times on book tickets to get genie+ options)
+- [ ] #magicbandLink #nodeFrameworkV2 LinkMagicBandToProfile() broken. must remove the trailing /. magic.band.js:248, magic.band.ts:176
+- [ ] #saucelabs #storageMigration create working process to migrate from sauce-storage to storage:filename=
+  - [ ] [ ] using newly found wdw platinum pass, create order failing "'Error encountered trying to access Lexicon VAS Service.'
+- [ ] #trackstar need suites added to trackstar-export library
+- [ ] #trackstarMigration move trackstar core monorepo into @gqe org.
+  - [ ] [ ] #trackstarMigration duplicate the monorepo, set full rights for james and myself only
+  - [ ] [ ] #trackstarMigration examine the structre, moving any dependencies in trackstar-genie and trackstar-template to new monorepo
+- [ ] #ReduceTestTRunTimes see [#brainstorm](./workingNotes/brainstorm.md) ¿run the blocker handlers in a seperate thread?
+- [ ] #frameworkCodeCoverage see [#brainstorm](./workingNotes/brainstorm.md)
+- [ ] #GQEInfra[ ]ckerSwarm see [#brainstorm](./workingNotes/brainstorm.md)
+- [ ] #nodeFrameworkV2 Which OS version is the selected emulator running? choices: [‘5.0’, ‘5.1’, ‘6.0’, ‘7.0’, ‘7.1.1’, ‘8.0’], default: ‘7.1.1’
+- [ ] #gqeCICD new/updated to allow multiple runs. dockerfile+docker-compose.yml, deployable service.
+  - [ ][ ] how to save configuration and jobs
+  - [ ] [ ] how to save run history
+  - [ ] [ ] how to move current configs/data into new reproducable systems.
+- [ ] #deptracker updateMany() upserts rather than insertMany(). insertFails when we create {_id: reponame_commitId} as we get ID collisions
+- [ ] #deptracker no repo arg=use current dir if it's a repo (no more default repo in code)
+- [ ] #deptracker allow file/json array input, a list of root repos to scan
+- [ ] #gqeCICD move all jobs and code to production systems, currently on buildmac11 and my git repos
+- [ ] #research #nodejsFrameworkV2 Migrate @GQE/Services to it's own monorepo #lerna
+- [ ] #research Determine how to catch and bubble up exceptions with full stack info.
+- [ ] #testanalytics examine errors, issues, delays in saucelabs jobs (we have more logging stored there)
+- [ ] #testanalytics pull a mobile app diff #ML
+- [ ] #testanylytics determine base ML goals #ML
+- [ ] #testanalytics determine best ML package #ML
+- [ ] tutorial: integrate new service modules into nodejs_framework
+- [ ] tutorial: integrate new service modules into node projects
+- [ ] tutorial: npm publishing
+- [ ] tutorial: write infrastructure training

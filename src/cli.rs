@@ -12,3 +12,11 @@ pub fn arg_handler <'main> () -> clap::ArgMatches<'main> {
         )
         .get_matches();
 }
+
+
+// add in formatting help
+// - [x] --> done, will be archived
+// - [ ] . --> work performed, will be journalled
+// sections:
+// ## active --> active TODO items
+// ## backlog --> TODO items that are in the backlog

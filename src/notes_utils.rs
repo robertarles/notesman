@@ -6,9 +6,9 @@ pub struct NotesMetadata {
     pub archive_line_needle: String,
     pub list_line_needle: String,
     // markdown section identification (e.g. "## section name")
-    pub todo_section_title: String,
-    pub done_section_title: String,
-    pub archive_section_title: String,
+    pub active_todo_section_title: String,
+    pub done_todo_section_title: String,
+    pub backlog_todo_section_title: String,
     // hugo front matter section identification (hugo site gen expects certain metadata here)
     pub front_matter_section_boundry: String,
     pub front_matter_date_key: String,

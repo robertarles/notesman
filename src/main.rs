@@ -19,7 +19,7 @@ fn main() {
     if ! passed_todo_filename.ends_with(".md") {
         std::process::exit(1);
     }
-    // set the extenstion expected for use in creating journal, archive and backup files
+    // set the extenstion expected for use in creating journal, archive and backup filestodo_section_title
     let file_extension = ".md";
     
     // parse the passed filename and path
@@ -41,9 +41,9 @@ fn main() {
         journal_line_needle: String::from("] . "), // a journal-ready line will have a checkbox and then the journal indicator
         archive_line_needle: String::from("- [x] "), // a checked checkbox
         list_line_needle: String::from("- "), // markdown syntax, this specifies a list item
-        todo_section_title: String::from("## TODO"),
-        done_section_title: String::from("## DONE"), // every line placed in a DONE or ARCHIVE section should be archived
-        archive_section_title: String::from("## ARCHIVE"),
+        active_todo_section_title: String::from("## ACTIVE"),
+        done_todo_section_title: String::from("## DONE"), // every line placed in a DONE or ARCHIVE section should be archived
+        backlog_todo_section_title: String::from("## BACKLOG"),
         front_matter_section_boundry: String::from("+++"), // this is the header section (front matter) boundry marker for HUGO static site builder
         front_matter_date_key: String::from("Date="), // we'll update date in the header each time we process a todo file
     };
@@ -86,15 +86,15 @@ fn main() {
             current_section = "".to_string();
         }
         // we're in the in-progress section
-        if line.starts_with(&notes_meta.todo_section_title){
-            current_section = notes_meta.todo_section_title.to_string();
+        if line.starts_with(&notes_meta.active_todo_section_title){
+            current_section = notes_meta.active_todo_section_title.to_string();
         }
         // sections archive && done have the same use case
-        if line.starts_with(&notes_meta.archive_section_title) {
-            current_section = notes_meta.archive_section_title.to_string();
+        if line.starts_with(&notes_meta.backlog_todo_section_title) {
+            current_section = notes_meta.backlog_todo_section_title.to_string();
         }
-        if line.starts_with(&notes_meta.done_section_title) {
-            current_section = notes_meta.done_section_title.to_string();
+        if line.starts_with(&notes_meta.done_todo_section_title) {
+            current_section = notes_meta.done_todo_section_title.to_string();
         }
         // front matter starts and ends with the same 'front_matter_section_boundry', so 'toggle off' the section if we see it again
         if line.starts_with(&notes_meta.front_matter_section_boundry) && (current_section != notes_meta.front_matter_section_boundry) {
@@ -114,7 +114,7 @@ fn main() {
             }
 
         // journal items with journal mark (those marked touched), plus archive ALL items that are marked complete
-        } else if current_section == notes_meta.todo_section_title {
+        } else if current_section == notes_meta.active_todo_section_title {
             
             // journal lines with the journal mark
             if line.contains(&notes_meta.journal_line_needle) {
@@ -129,7 +129,7 @@ fn main() {
             }
         
         // archive all list items in an archive-type section
-        } else if current_section == notes_meta.archive_section_title || current_section == notes_meta.done_section_title {
+        } else if current_section == notes_meta.backlog_todo_section_title || current_section == notes_meta.done_todo_section_title {
             if line.contains(&notes_meta.archive_line_needle) {
                 archive_lines.push(line.replace(&notes_meta.archive_line_needle, &archive_line_prefix).to_string());
             } else if line.contains(&notes_meta.list_line_needle) {
