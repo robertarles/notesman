@@ -11,9 +11,10 @@ use chrono::{Datelike, Timelike, Local};
 
 fn main() {
 
-    // setup arg handling, get the todo filename
+    // parse the cli args
     let cli_args = cli::arg_handler();
 
+    // get the passed in filename parameter
     let passed_todo_filename = cli_args.value_of("todo_file").unwrap();
     // make sure a markdown file was specified (TODO: add handling of arbitrary extensions?)
     if ! passed_todo_filename.ends_with(".md") {
@@ -37,15 +38,15 @@ fn main() {
     let archive_filename = original_todo_filename.replace(file_extension, &format!("-ARCHIVE{}", &file_extension));
     
     let notes_meta = NotesMetadata {
-        journal_needle: String::from(" . "),
-        journal_line_needle: String::from("] . "), // a journal-ready line will have a checkbox and then the journal indicator
-        archive_line_needle: String::from("- [x] "), // a checked checkbox
+        journal_needle: String::from(" . "), // "touched" mark, journal worked on / "touched" items
+        journal_line_needle: String::from("] . "), // "toucjed, a journal-ready line will have a checkbox and then the journal indicator
+        archive_line_needle: String::from("- [x] "), // a checked checkbox, done
         list_line_needle: String::from("- "), // markdown syntax, this specifies a list item
         active_todo_section_title: String::from("## ACTIVE"),
-        done_todo_section_title: String::from("## DONE"), // every line placed in a DONE or ARCHIVE section should be archived
         backlog_todo_section_title: String::from("## BACKLOG"),
-        front_matter_section_boundry: String::from("+++"), // this is the header section (front matter) boundry marker for HUGO static site builder
-        front_matter_date_key: String::from("Date="), // we'll update date in the header each time we process a todo file
+        done_todo_section_title: String::from("## DONE"), // every line placed in a DONE or ARCHIVE section should be archived
+        front_matter_section_boundry: String::from("---"), // this is the header section (front matter) boundry marker for HUGO static site builder
+        front_matter_date_key: String::from("date:"), // we'll update date in the header each time we process a todo file
     };
 
     // create a timestamp for the archived and journaled items/lines
@@ -67,7 +68,7 @@ fn main() {
         now.month(),
         now.day(),
     );
-    let archive_line_stamp = format!(" {} ",&timestamp);
+    let journal_line_stamp = format!(" {} ",&timestamp);
     let archive_line_prefix = format!("- {} ",&timestamp); // make each line a list item (markdown otherwise globs all lines into a paragraph)
 
     // the todo file to process
@@ -78,6 +79,7 @@ fn main() {
     println!("Reading [{}]", &todo_source_filename);
     let todo_lines_str = fs::read_to_string(&todo_source_filename).expect("Unable to read specified todo file");
 
+    // loop over each line in the ToDo file
     let mut current_section = String::from(""); // start with no section found
     for line in todo_lines_str.split("\n") {
 
@@ -89,14 +91,16 @@ fn main() {
         if line.starts_with(&notes_meta.active_todo_section_title){
             current_section = notes_meta.active_todo_section_title.to_string();
         }
-        // sections archive && done have the same use case
+        // we're in the backlog section
         if line.starts_with(&notes_meta.backlog_todo_section_title) {
             current_section = notes_meta.backlog_todo_section_title.to_string();
         }
+        // we're in the done section
         if line.starts_with(&notes_meta.done_todo_section_title) {
             current_section = notes_meta.done_todo_section_title.to_string();
         }
-        // front matter starts and ends with the same 'front_matter_section_boundry', so 'toggle off' the section if we see it again
+        // front matter starts and ends with the same 'front_matter_section_boundry', 
+        // 'toggle off' the section if we see it again
         if line.starts_with(&notes_meta.front_matter_section_boundry) && (current_section != notes_meta.front_matter_section_boundry) {
             current_section = notes_meta.front_matter_section_boundry.to_string();
         }
@@ -107,7 +111,7 @@ fn main() {
         if current_section == notes_meta.front_matter_section_boundry {
 
             // update the date line in the frontmatter (header) section
-            if line.starts_with(&notes_meta.front_matter_date_key) {
+            if line.to_lowercase().starts_with(&notes_meta.front_matter_date_key.to_lowercase()) {
                 todo_lines.push(format!("{} \"{}\"", &notes_meta.front_matter_date_key, datestring));
             } else {
                 todo_lines.push(line.to_string());
@@ -118,7 +122,7 @@ fn main() {
             
             // journal lines with the journal mark
             if line.contains(&notes_meta.journal_line_needle) {
-                journal_lines.push(line.replace(&notes_meta.journal_needle, &archive_line_stamp));
+                journal_lines.push(line.replace(&notes_meta.journal_needle, &journal_line_stamp));
             }
 
             // if closed, move to archive, else keep in todo
@@ -131,9 +135,11 @@ fn main() {
         // archive all list items in an archive-type section
         } else if current_section == notes_meta.backlog_todo_section_title || current_section == notes_meta.done_todo_section_title {
             if line.contains(&notes_meta.archive_line_needle) {
+                // archive completed items even in if the backlog section
                 archive_lines.push(line.replace(&notes_meta.archive_line_needle, &archive_line_prefix).to_string());
-            } else if line.contains(&notes_meta.list_line_needle) {
-                archive_lines.push(line.replace(&notes_meta.list_line_needle, &archive_line_prefix).to_string());
+            //} else if line.contains(&notes_meta.list_line_needle) {
+                // TODO: why was this archiving list items in the backlog?
+                //archive_lines.push(line.replace(&notes_meta.list_line_needle, &archive_line_prefix).to_string());
             } else {
                 todo_lines.push(line.to_string());
             }
