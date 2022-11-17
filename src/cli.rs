@@ -1,9 +1,9 @@
 extern crate clap;
-use clap::{Arg, App};
+use clap::{App, Arg};
 
-pub fn arg_handler <'main> () -> clap::ArgMatches<'main> {
+pub fn arg_handler<'main>() -> clap::ArgMatches<'main> {
     return App::new("notesman")
-        .version("0.5.4")
+        .version("0.6.0")
         .arg(
             Arg::with_name("todo_file")
                 .help("The source todo file to be processed.")
@@ -12,7 +12,6 @@ pub fn arg_handler <'main> () -> clap::ArgMatches<'main> {
         )
         .get_matches();
 }
-
 
 // add in formatting help
 // - [x] --> done, will be archived

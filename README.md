@@ -2,12 +2,20 @@
 
 util to help manage my todos in my notes
 
+## Build
+
+cargo build
+
+## Install
+
 > cargo install --path .
 
 ## Use
 
+Currently only archives complete, and journals "touched" tasks
+
 > notesman --help
-notesman 0.5.4
+notesman 0.6.0
 
 USAGE:
     notesman <todo_file>
