@@ -6,6 +6,7 @@ pub struct NotesMetadata {
     pub archive_line_needle: String,
     pub list_line_needle: String,
     // markdown section identification (e.g. "## section name")
+    pub todo_section_title_prefix: String,
     pub active_todo_section_title: String,
     pub done_todo_section_title: String,
     pub backlog_todo_section_title: String,

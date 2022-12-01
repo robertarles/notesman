@@ -55,6 +55,7 @@ fn main() {
         journal_line_needle: String::from("] . "), // "touched, a journal-ready line will have a checkbox and then the journal indicator
         archive_line_needle: String::from("- [x] "), // a checked checkbox, done
         list_line_needle: String::from("- "),      // markdown syntax, this specifies a list item
+        todo_section_title_prefix: String::from("## "), 
         active_todo_section_title: String::from("## ACTIVE"),
         backlog_todo_section_title: String::from("## BACKLOG"),
         done_todo_section_title: String::from("## DONE"), // every line placed in a DONE or ARCHIVE section should be archived
@@ -92,7 +93,7 @@ fn main() {
     let mut current_section = String::from(""); // start with no section found
     for line in todo_lines_str.split("\n") {
         // when finding a header/section, clear the section. All code must assume we're not in a special section at this point.
-        if line.starts_with("#") {
+        if line.starts_with(&notes_meta.todo_section_title_prefix) {
             current_section = "".to_string();
         }
         // we're in the in-progress section
